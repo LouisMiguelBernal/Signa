@@ -143,26 +143,24 @@ with detect:
 
         with col1:
             st.image(image, caption="Uploaded Image", use_container_width=True)
-            if st.button("Detect Traffic Signs"):
-                # Process image and detect traffic signs
-                detected_img, new_detections = process_image(image)
-                
-                with col2:
-                    st.image(cv2.cvtColor(np.array(detected_img, dtype=np.uint8), cv2.COLOR_BGR2RGB), caption="Detected Image", use_container_width=True)
-                
-                # Wait for the detected image to render before playing sound
-                time.sleep(1.5)  # Allow time for Streamlit to render the image
-                
-                # Trigger the sound feedback after the image has been displayed
-                if new_detections:
-                    play_sound(new_detections)
+
+            # Process image and detect traffic signs automatically
+            detected_img, new_detections = process_image(image)
+            
+            with col2:
+                st.image(cv2.cvtColor(np.array(detected_img, dtype=np.uint8), cv2.COLOR_BGR2RGB), caption="Detected Image", use_container_width=True)
+            
+            # Trigger the sound feedback immediately after processing the image
+            if new_detections:
+                play_sound(new_detections)
+
     else:
         st.session_state.processed_image = None  # Reset detected image when file is removed
         st.session_state.last_detected_classes.clear()  # Clear detected classes
         st.image("assets/bg.jpg")
 
 with model_info:
-    st.write("ℹ️ This system uses YOLO for traffic sign detection and supports real-time feedback")
+    st.write("ℹ️ This system uses YOLO for traffic sign detection and supports real-time")
 
 # Footer Section
 footer = f"""
