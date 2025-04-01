@@ -156,7 +156,7 @@ with detect:
                 
                 # Trigger the sound feedback immediately after processing the image
                 if new_detections:
-                    play_sound(new_detections)
+                    play_sound(new_detections)  # This should trigger the sound automatically
 
     else:
         st.session_state.processed_image = None  # Reset detected image when file is removed
@@ -164,7 +164,7 @@ with detect:
         st.image("assets/bg.jpg")
 
 with model_info:
-    st.write("ℹ️ This system uses YOLO for traffic sign detection and supports real-time detection.")
+    st.write("ℹ️ This system uses YOLO for traffic sign detection and supports real-time")
 
 # Footer Section
 footer = f"""
