@@ -56,6 +56,10 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
+# ------------------- SESSION STATE INITIALIZATION -------------------
+if "last_detected_classes" not in st.session_state:
+    st.session_state.last_detected_classes = set()
+
 # ------------------- SOUND MAPPING -------------------
 SOUND_FILES = {
     "Child-Pedestrian Crossing": "assets/child_pedestrian_crossing.mp3",
@@ -74,10 +78,7 @@ def autoplay_audio(file_path: str):
             <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
             </audio>
             """
-        st.markdown(
-            md,
-            unsafe_allow_html=True,
-        )
+        st.markdown(md, unsafe_allow_html=True)
 
 # ------------------- LOAD YOLO MODEL -------------------
 @st.cache_resource
@@ -138,9 +139,6 @@ with detect:
                 # Display the detected image next to the uploaded image
                 col2.image(cv2.cvtColor(np.array(detected_img, dtype=np.uint8), cv2.COLOR_BGR2RGB), caption="Detected Image", use_container_width=True)
                 
-                # Wait for the detected image to render before playing sound
-                time.sleep(1.5)  # Allow time for Streamlit to render the image
-                
                 # Trigger the sound feedback after the image has been displayed
                 if new_detections:
                     for detection in new_detections:
@@ -153,8 +151,8 @@ with detect:
         st.image("assets/bg.jpg")
 
 with model_info:
-    st.write("")  # Add your model information or other content here
-
+    st.write("YOLOv5 model is used for traffic sign detection.")
+    
 # Footer Section
 footer = f"""
 <hr>
