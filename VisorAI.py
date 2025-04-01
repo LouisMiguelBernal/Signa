@@ -57,6 +57,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ------------------- SESSION STATE INITIALIZATION -------------------
+# Initialize session state for "last_detected_classes" if not already initialized
 if "last_detected_classes" not in st.session_state:
     st.session_state.last_detected_classes = set()
 
@@ -70,6 +71,7 @@ SOUND_FILES = {
 
 # ------------------- AUDIO PLAYBACK USING BASE64 -------------------
 def autoplay_audio(file_path: str):
+    """Plays the sound automatically using base64-encoded audio."""
     with open(file_path, "rb") as f:
         data = f.read()
         b64 = base64.b64encode(data).decode()
@@ -83,6 +85,7 @@ def autoplay_audio(file_path: str):
 # ------------------- LOAD YOLO MODEL -------------------
 @st.cache_resource
 def load_model():
+    """Load the YOLOv5 model."""
     model_path = "assets/visor.pt"
     if not os.path.exists(model_path):
         st.error(f"❌ Model file not found: {model_path}")
@@ -112,6 +115,7 @@ def process_image(image):
         if confidence > 0.3 and class_name in SOUND_FILES:
             detected_classes.add(class_name)
 
+    # Calculate new detections by subtracting the previously detected classes
     new_detections = detected_classes - st.session_state.last_detected_classes
     st.session_state.last_detected_classes = detected_classes  # Update detected classes
 
@@ -125,6 +129,7 @@ with detect:
         uploaded_file = st.file_uploader("Upload Image", type=["jpg", "jpeg", "png"])
 
     if uploaded_file:
+        # Load and process the uploaded image
         image = Image.open(uploaded_file).convert("RGB")
         
         # Create two columns with equal width for the images
@@ -146,6 +151,7 @@ with detect:
                         if audio_file and os.path.exists(audio_file):
                             autoplay_audio(audio_file)  # Play the sound automatically using base64 encoding
     else:
+        # Reset session state when file is removed
         st.session_state.processed_image = None  # Reset detected image when file is removed
         st.session_state.last_detected_classes.clear()  # Clear detected classes
         st.image("assets/bg.jpg")
