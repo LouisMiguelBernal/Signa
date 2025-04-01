@@ -1,10 +1,7 @@
 streamlit
-opencv-python
 numpy
+opencv-python
 Pillow
+playsound
 ultralytics
 base64
-warnings
-time
-threading
-playsound 
