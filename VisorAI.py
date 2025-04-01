@@ -5,14 +5,10 @@ import numpy as np
 from PIL import Image
 from ultralytics import YOLO
 import os
-os.environ["SDL_VIDEODRIVER"] = "dummy" 
 import warnings
 import base64
 import time
 import threading
-import pygame
-from pydub import AudioSegment
-import simpleaudio as sa
 
 # Suppress warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -59,13 +55,11 @@ st.markdown("""
 
 # ------------------- SESSION STATE INITIALIZATION -------------------
 if "last_play_time" not in st.session_state:
-    st.session_state.last_play_time = 0  # Prevents audio spam
+    st.session_state.last_play_time = 0  # Tracks last sound play time
 if "last_detected_classes" not in st.session_state:
-    st.session_state.last_detected_classes = set()  # Tracks detected classes
-if "processed_image" not in st.session_state:
-    st.session_state.processed_image = None
-if "play_sound_flag" not in st.session_state:
-    st.session_state.play_sound_flag = False  # Flag to control sound playback
+    st.session_state.last_detected_classes = set()  # Stores previously detected classes
+if "last_upload_time" not in st.session_state:
+    st.session_state.last_upload_time = 0  # Tracks last upload timestamp
 
 # ------------------- SOUND MAPPING -------------------
 SOUND_FILES = {
@@ -75,22 +69,63 @@ SOUND_FILES = {
     "Stop": "assets/stop.mp3",
 }
 
-# ------------------- FUNCTION FOR PLAYING SOUND -------------------
-def play_sound(class_names):
-    """Plays sound for detected traffic signs."""
-    current_time = time.time()
-    if current_time - st.session_state.last_play_time < 1.5:
-        return  # Prevent rapid sound spam
+def generate_audio_js(audio_file):
+    """Generate JavaScript to play audio."""
+    if not os.path.exists(audio_file):
+        return ""
 
+    with open(audio_file, "rb") as f:
+        audio_bytes = f.read()
+    audio_base64 = base64.b64encode(audio_bytes).decode()
+
+    return f"""
+    <script>
+        var audio = new Audio("data:audio/mp3;base64,{audio_base64}");
+        audio.play().catch(error => console.log("Autoplay failed:", error));
+    </script>
+    """
+
+def play_sound(class_names):
+    """Plays detected traffic sign sounds sequentially."""
+    audio_files = [SOUND_FILES.get(class_name) for class_name in class_names if class_name in SOUND_FILES]
+    if not audio_files:
+        return
+
+    current_time = time.time()
+    if current_time - st.session_state.last_play_time < 1.5:  # Avoid sound spamming
+        return
     st.session_state.last_play_time = current_time
-    for class_name in class_names:
-        audio_file = SOUND_FILES.get(class_name)
-        if audio_file and os.path.exists(audio_file):
-            # Load the audio file
-            sound = AudioSegment.from_mp3(audio_file)
-            # Play the sound using simpleaudio
-            play_obj = sa.play_buffer(sound.raw_data, num_channels=1, bytes_per_sample=2, sample_rate=44100)
-            play_obj.wait_done()  # Wait until the sound finishes before continuing
+
+    print(f"🔊 Playing sounds for: {', '.join(class_names)}")
+
+    # Generate JavaScript to play sounds sequentially
+    audio_scripts = []
+    for idx, audio_file in enumerate(audio_files):
+        if not os.path.exists(audio_file):
+            continue
+
+        with open(audio_file, "rb") as f:
+            audio_bytes = f.read()
+        audio_base64 = base64.b64encode(audio_bytes).decode()
+
+        delay = idx * 2000  # 2-second delay between each sound
+        audio_scripts.append(f"""
+        setTimeout(() => {{
+            var audio{idx} = new Audio("data:audio/mp3;base64,{audio_base64}");
+            audio{idx}.play().catch(error => console.log("Autoplay failed:", error));
+        }}, {delay});
+        """)
+
+    audio_js = "<script>" + "".join(audio_scripts) + "</script>"
+    st.components.v1.html(audio_js, height=0)
+
+def new_upload_detected():
+    """Checks if a new file has been uploaded and resets detections."""
+    current_time = time.time()
+    if current_time - st.session_state.last_upload_time >= 0.5:
+        st.session_state.last_upload_time = current_time
+        return True
+    return False
 
 # ------------------- LOAD YOLO MODEL -------------------
 @st.cache_resource
@@ -106,65 +141,93 @@ model = load_model()
 if model is None:
     st.stop()
 
-# ------------------- IMAGE PROCESSING -------------------
-def process_image(image):
-    """Processes an image for object detection."""
-    image = np.array(image)
-    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+# ------------------- STREAMLIT UI TABS -------------------
+detect, model_info = st.tabs(["Detection", "Model Information"])
 
-    results = model(image, verbose=False)
-    detected_img = results[0].plot(conf=True)
-
+def check_detections(results):
+    """Triggers sound only for newly detected traffic signs."""
     detected_classes = set()
+    
     for detection in results[0].boxes:
         confidence = detection.conf[0].item()
         class_index = int(detection.cls[0].item())
         class_name = model.names[class_index]
 
-        if confidence > 0.3 and class_name in SOUND_FILES:
+        print(f"📸 Detected: {class_name}, Confidence: {confidence}")
+
+        if confidence > 0.2 and class_name in SOUND_FILES:
             detected_classes.add(class_name)
 
+    # Play sounds only for newly detected traffic signs
     new_detections = detected_classes - st.session_state.last_detected_classes
+    if new_detections:
+        play_sound(new_detections)
+
     st.session_state.last_detected_classes = detected_classes  # Update detected classes
 
-    return detected_img, new_detections
+# ------------------- IMAGE & VIDEO PROCESSING -------------------
+def process_image(image):
+    """Processes an image for object detection."""
+    image = np.array(image)
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)  # Convert PIL RGB image to OpenCV BGR format
 
-# ------------------- STREAMLIT UI -------------------
-detect, model_info = st.tabs(["Detection", "Model Information"])
+    results = model(image, verbose=False)
 
+    check_detections(results)
+
+    detected_img = results[0].plot(conf=True)
+    
+    return cv2.cvtColor(np.array(detected_img, dtype=np.uint8), cv2.COLOR_BGR2RGB)  # Convert back to RGB for display
+
+def process_video(video_path):
+    """Processes video frames for object detection."""
+    cap = cv2.VideoCapture(video_path)
+    stframe = st.empty()
+
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        results = model(frame, verbose=False)
+        check_detections(results)
+
+        detected_frame = results[0].plot(conf=True)
+        detected_frame = cv2.cvtColor(np.array(detected_frame, dtype=np.uint8), cv2.COLOR_BGR2RGB)
+
+        stframe.image(detected_frame, channels="RGB", use_container_width=True)
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+# ------------------- FILE UPLOADER -------------------
+uploaded_file = st.sidebar.file_uploader("Upload Image/Video", type=["jpg", "jpeg", "png", "mp4", "avi", "mov"])
+
+# ------------------- DETECTION FUNCTIONALITY -------------------
 with detect:
-    with st.sidebar:
-        uploaded_file = st.file_uploader("Upload Image", type=["jpg", "jpeg", "png"])
-
     if uploaded_file:
-        image = Image.open(uploaded_file).convert("RGB")
-        
-        # Create two columns with equal width for the images
-        col1, col2 = st.columns([1, 1])
+        if new_upload_detected():  # Detect new upload and reset tracking
+            st.session_state.last_detected_classes.clear()
 
-        with col1:
-            st.image(image, caption="Uploaded Image", use_container_width=True)
-            if st.button("Detect Traffic Signs"):
-                # Process image and detect traffic signs
-                detected_img, new_detections = process_image(image)
-                
-                # Display the detected image next to the uploaded image
-                col2.image(cv2.cvtColor(np.array(detected_img, dtype=np.uint8), cv2.COLOR_BGR2RGB), caption="Detected Image", use_container_width=True)
-                
-                # Wait for the detected image to render before playing sound
-                time.sleep(1.5)  # Allow time for Streamlit to render the image
-                
-                # Trigger the sound feedback after the image has been displayed
-                if new_detections:
-                    play_sound(new_detections)
+        file_type = uploaded_file.type.split("/")[0]
+
+        if file_type == "image":
+            image = Image.open(uploaded_file).convert("RGB")  # Ensure correct format
+            with st.spinner("Processing image..."):
+                detected_img = process_image(image)
+            st.image(detected_img, caption="Detected Image", use_container_width=True)
+
+        elif file_type == "video":
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as temp_file:
+                temp_file.write(uploaded_file.read())
+                temp_file_path = temp_file.name
+
+            with st.spinner("Processing video..."):
+                process_video(temp_file_path)
+
+            os.remove(temp_file_path)
     else:
-        st.session_state.processed_image = None  # Reset detected image when file is removed
-        st.session_state.last_detected_classes.clear()  # Clear detected classes
         st.image("assets/bg.jpg")
-
-with model_info:
-    st.write("Model Info Placeholder: Add more details about the YOLO model or other info.")
-
 
 # Footer Section
 footer = f"""
