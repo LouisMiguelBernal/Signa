@@ -73,31 +73,6 @@ SOUND_FILES = {
     "Stop": "assets/stop.mp3",
 }
 
-# ------------------- SAFE AUDIO INITIALIZATION -------------------
-try:
-    import pygame
-    pygame.mixer.init()
-except Exception as e:
-    print(f"⚠️ Audio initialization failed: {e}")
-    pygame = None  # Disable audio functionality if unavailable
-
-def play_sound(class_names):
-    """Plays sound for detected traffic signs."""
-    if not pygame:
-        return  # Skip if pygame is unavailable
-    
-    current_time = time.time()
-    if current_time - st.session_state.last_play_time < 1.5:
-        return  # Prevent rapid sound spam
-
-    st.session_state.last_play_time = current_time
-    for class_name in class_names:
-        audio_file = SOUND_FILES.get(class_name)
-        if audio_file and os.path.exists(audio_file):
-            pygame.mixer.music.load(audio_file)
-            pygame.mixer.music.play()
-            time.sleep(2)  # Delay to avoid overlap
-
 # ------------------- LOAD YOLO MODEL -------------------
 @st.cache_resource
 def load_model():
@@ -135,6 +110,22 @@ def process_image(image):
 
     return detected_img, new_detections
 
+# ------------------- PLAY SOUND USING STREAMLIT -------------------
+def play_sound(class_names):
+    """Plays sound for detected traffic signs using Streamlit's audio functionality."""
+    current_time = time.time()
+    if current_time - st.session_state.last_play_time < 1.5:
+        return  # Prevent rapid sound spam
+
+    st.session_state.last_play_time = current_time
+    for class_name in class_names:
+        audio_file = SOUND_FILES.get(class_name)
+        if audio_file and os.path.exists(audio_file):
+            st.write(f"Playing sound for {class_name} from {audio_file}")  # Debug output
+            # Streamlit audio playback
+            with open(audio_file, "rb") as f:
+                st.audio(f.read(), format="audio/mp3")
+
 # ------------------- STREAMLIT UI -------------------
 st.title("🚦 Traffic Sign Detection System")
 
@@ -171,7 +162,7 @@ with detect:
         st.image("assets/bg.jpg")
 
 with model_info:
-    st.write("ℹ️ This system uses YOLO for traffic sign detection and supports real-time feedback with audio cues.")
+    st.write("ℹ️ This system uses YOLO for traffic sign detection and supports real-time feedback")
 
 # Footer Section
 footer = f"""
