@@ -1,10 +1,9 @@
-import time
+import streamlit as st
 import os
+import time
+from PIL import Image
 import numpy as np
 import cv2
-import streamlit as st
-from PIL import Image
-from playsound import playsound  # Import playsound
 from ultralytics import YOLO
 
 # Suppress warnings
