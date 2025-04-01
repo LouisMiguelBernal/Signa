@@ -82,23 +82,23 @@ def autoplay_audio(file_path: str):
                 </audio>
                 """
             st.markdown(md, unsafe_allow_html=True)
-            
-            # Adding delay to allow sound to finish before playing the next
-            duration = 3  # You may need to adjust this depending on your audio file lengths
-            time.sleep(duration)  # Delay to ensure one sound completes before the next
     except Exception as e:
         st.error(f"Error playing sound: {str(e)}")
 
 # ------------------- LOAD YOLO MODEL -------------------
 @st.cache_resource
 def load_model():
-    """Load the YOLOv5 model from visor.pt."""
-    model_path = "assets/visor.pt"  # Path to your model file
+    """Load the YOLOv5 model."""
+    model_path = "assets/visor.pt"
     if not os.path.exists(model_path):
         st.error(f"❌ Model file not found: {model_path}")
         return None
     print("✅ YOLO Model Loaded")
     return YOLO(model_path)
+
+model = load_model()
+if model is None:
+    st.stop()
 
 # ------------------- IMAGE PROCESSING -------------------
 def process_image(image):
@@ -149,7 +149,6 @@ with detect:
                 
                 # Trigger the sound feedback after the image has been displayed
                 if new_detections:
-                    # Sort the detections to maintain order
                     for detection in new_detections:
                         audio_file = SOUND_FILES.get(detection)
                         
@@ -160,7 +159,7 @@ with detect:
                                 st.error(f"Error: Sound file for '{detection}' not found.")
                         else:
                             st.error(f"No sound mapped for '{detection}'.")
-                
+
     else:
         # Reset session state when file is removed
         st.session_state.processed_image = None  # Reset detected image when file is removed
@@ -169,12 +168,6 @@ with detect:
 
 with model_info:
     st.write("YOLOv5 model is used for traffic sign detection.")
-
-# ------------------- INITIALIZE THE YOLO MODEL -------------------
-# Make sure the model is loaded before processing any images.
-model = load_model()
-if model is None:
-    st.stop()
     
 # Footer Section
 footer = f"""
