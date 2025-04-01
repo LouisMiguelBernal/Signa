@@ -118,12 +118,16 @@ def play_sound(class_names):
         return  # Prevent rapid sound spam
 
     st.session_state.last_play_time = current_time
+    audio_files = []
     for class_name in class_names:
         audio_file = SOUND_FILES.get(class_name)
         if audio_file and os.path.exists(audio_file):
-            # Streamlit audio playback
-            with open(audio_file, "rb") as f:
-                st.audio(f.read(), format="audio/mp3")
+            audio_files.append(audio_file)
+    
+    # Play sound files automatically
+    for audio_file in audio_files:
+        with open(audio_file, "rb") as f:
+            st.audio(f.read(), format="audio/mp3")
 
 # ------------------- STREAMLIT UI -------------------
 st.title("🚦 Traffic Sign Detection System")
@@ -160,7 +164,7 @@ with detect:
         st.image("assets/bg.jpg")
 
 with model_info:
-    st.write("ℹ️ This system uses YOLO for traffic sign detection and supports real-time feedback with audio cues.")
+    st.write("ℹ️ This system uses YOLO for traffic sign detection and supports real-time fee")
 
 # Footer Section
 footer = f"""
