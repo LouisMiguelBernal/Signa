@@ -3,3 +3,4 @@ opencv-python-headless
 numpy
 Pillow
 ultralytics
+pygame
