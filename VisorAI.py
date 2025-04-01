@@ -92,8 +92,8 @@ def autoplay_audio(file_path: str):
 # ------------------- LOAD YOLO MODEL -------------------
 @st.cache_resource
 def load_model():
-    """Load the YOLOv5 model."""
-    model_path = "assets/visor.pt"
+    """Load the YOLOv5 model from visor.pt."""
+    model_path = "assets/visor.pt"  # Path to your model file
     if not os.path.exists(model_path):
         st.error(f"❌ Model file not found: {model_path}")
         return None
@@ -169,6 +169,12 @@ with detect:
 
 with model_info:
     st.write("YOLOv5 model is used for traffic sign detection.")
+
+# ------------------- INITIALIZE THE YOLO MODEL -------------------
+# Make sure the model is loaded before processing any images.
+model = load_model()
+if model is None:
+    st.stop()
     
 # Footer Section
 footer = f"""
