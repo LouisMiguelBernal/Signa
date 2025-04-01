@@ -173,7 +173,6 @@ with detect:
 with model_info:
     st.write("ℹ️ This system uses YOLO for traffic sign detection and supports real-time feedback with audio cues.")
 
-
 # Footer Section
 footer = f"""
 <hr>
