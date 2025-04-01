@@ -89,6 +89,17 @@ def autoplay_audio(file_path: str):
     except Exception as e:
         st.error(f"Error playing sound: {str(e)}")
 
+# ------------------- LOAD YOLO MODEL -------------------
+@st.cache_resource
+def load_model():
+    """Load the YOLOv5 model."""
+    model_path = "assets/visor.pt"
+    if not os.path.exists(model_path):
+        st.error(f"❌ Model file not found: {model_path}")
+        return None
+    print("✅ YOLO Model Loaded")
+    return YOLO(model_path)
+
 # ------------------- IMAGE PROCESSING -------------------
 def process_image(image):
     """Processes an image for object detection."""
