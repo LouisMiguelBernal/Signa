@@ -69,19 +69,34 @@ SOUND_FILES = {
     "Stop": "assets/stop.mp3",
 }
 
-# ------------------- AUDIO PLAYBACK USING Pygame (Sequential) -------------------
-pygame.mixer.init()  # Initialize the mixer module for audio playback
+# ------------------- SESSION STATE INITIALIZATION -------------------
+# Ensure that 'last_detected_classes' exists in session state before accessing it
+if "last_detected_classes" not in st.session_state:
+    st.session_state.last_detected_classes = set()
 
-def play_sounds_sequentially(sound_files):
-    """Play multiple sound files sequentially."""
-    for sound_file in sound_files:
-        if os.path.exists(sound_file):
-            pygame.mixer.music.load(sound_file)
-            pygame.mixer.music.play()
-            while pygame.mixer.music.get_busy():  # Wait until the sound finishes playing
-                time.sleep(1)
-        else:
-            st.error(f"Error: Sound file '{sound_file}' not found.")
+# ------------------- SOUND MAPPING -------------------
+SOUND_FILES = {
+    "Child-Pedestrian Crossing": "assets/child_pedestrian_crossing.mp3",
+    "Give Way": "assets/give_way.mp3",
+    "Speed Limit": "assets/speed_limit.mp3",
+    "Stop": "assets/stop.mp3",
+}
+
+# ------------------- AUDIO PLAYBACK USING BASE64 -------------------
+def autoplay_audio(file_path: str):
+    """Plays the sound automatically using base64-encoded audio."""
+    try:
+        with open(file_path, "rb") as f:
+            data = f.read()
+            b64 = base64.b64encode(data).decode()
+            md = f"""
+                <audio controls autoplay="true">
+                <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+                </audio>
+                """
+            st.markdown(md, unsafe_allow_html=True)
+    except Exception as e:
+        st.error(f"Error playing sound: {str(e)}")
 
 # ------------------- LOAD YOLO MODEL -------------------
 @st.cache_resource
@@ -147,18 +162,16 @@ with detect:
                 
                 # Trigger the sound feedback after the image has been displayed
                 if new_detections:
-                    sound_files_to_play = []
                     for detection in new_detections:
                         audio_file = SOUND_FILES.get(detection)
                         
                         if audio_file:
-                            sound_files_to_play.append(audio_file)
+                            if os.path.exists(audio_file):  # Ensure the file exists
+                                autoplay_audio(audio_file)  # Play the sound automatically using base64 encoding
+                            else:
+                                st.error(f"Error: Sound file for '{detection}' not found.")
                         else:
                             st.error(f"No sound mapped for '{detection}'.")
-
-                    # Play sounds sequentially
-                    if sound_files_to_play:
-                        play_sounds_sequentially(sound_files_to_play)
 
     else:
         # Reset session state when file is removed
@@ -167,7 +180,7 @@ with detect:
         st.image("assets/bg.jpg")
 
 with model_info:
-    st.write("YOLOv5 model is used for traffic sign detection.")
+    st.write("YOLOv5 model is used for traffic sign detection.") 
     
 # Footer Section
 footer = f"""
