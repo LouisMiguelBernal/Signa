@@ -10,6 +10,8 @@ import base64
 import time
 import threading
 import pygame
+import base64
+
 
 # Suppress warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -54,16 +56,6 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# ------------------- SESSION STATE INITIALIZATION -------------------
-if "last_play_time" not in st.session_state:
-    st.session_state.last_play_time = 0  # Prevents audio spam
-if "last_detected_classes" not in st.session_state:
-    st.session_state.last_detected_classes = set()  # Tracks detected classes
-if "processed_image" not in st.session_state:
-    st.session_state.processed_image = None
-if "play_sound_flag" not in st.session_state:
-    st.session_state.play_sound_flag = False  # Flag to control sound playback
-
 # ------------------- SOUND MAPPING -------------------
 SOUND_FILES = {
     "Child-Pedestrian Crossing": "assets/child_pedestrian_crossing.mp3",
@@ -72,22 +64,20 @@ SOUND_FILES = {
     "Stop": "assets/stop.mp3",
 }
 
-# Initialize pygame mixer for audio playback
-pygame.mixer.init()
-
-def play_sound(class_names):
-    """Plays sound for detected traffic signs."""
-    current_time = time.time()
-    if current_time - st.session_state.last_play_time < 1.5:
-        return  # Prevent rapid sound spam
-
-    st.session_state.last_play_time = current_time
-    for class_name in class_names:
-        audio_file = SOUND_FILES.get(class_name)
-        if audio_file and os.path.exists(audio_file):
-            pygame.mixer.music.load(audio_file)
-            pygame.mixer.music.play()
-            time.sleep(2)  # Delay to avoid overlap
+# ------------------- AUDIO PLAYBACK USING BASE64 -------------------
+def autoplay_audio(file_path: str):
+    with open(file_path, "rb") as f:
+        data = f.read()
+        b64 = base64.b64encode(data).decode()
+        md = f"""
+            <audio controls autoplay="true">
+            <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+            </audio>
+            """
+        st.markdown(
+            md,
+            unsafe_allow_html=True,
+        )
 
 # ------------------- LOAD YOLO MODEL -------------------
 @st.cache_resource
@@ -153,15 +143,17 @@ with detect:
                 
                 # Trigger the sound feedback after the image has been displayed
                 if new_detections:
-                    play_sound(new_detections)
+                    for detection in new_detections:
+                        audio_file = SOUND_FILES.get(detection)
+                        if audio_file and os.path.exists(audio_file):
+                            autoplay_audio(audio_file)  # Play the sound automatically using base64 encoding
     else:
         st.session_state.processed_image = None  # Reset detected image when file is removed
         st.session_state.last_detected_classes.clear()  # Clear detected classes
         st.image("assets/bg.jpg")
 
 with model_info:
-    st.write("")
-
+    st.write("")  # Add your model information or other content here
 
 # Footer Section
 footer = f"""
