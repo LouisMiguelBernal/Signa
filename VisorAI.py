@@ -149,17 +149,14 @@ with detect:
                 
                 # Trigger the sound feedback after the image has been displayed
                 if new_detections:
-                    # Play sounds sequentially by waiting for one to finish before playing the next
+                    # Create a queue to play sounds one after another
                     for detection in new_detections:
                         audio_file = SOUND_FILES.get(detection)
                         
                         if audio_file:
                             if os.path.exists(audio_file):  # Ensure the file exists
-                                # Use st.empty() to manage audio playback sequentially
-                                audio_placeholder = st.empty()
                                 autoplay_audio(audio_file)  # Play the sound automatically using base64 encoding
-                                time.sleep(5)  # Wait for 5 seconds before playing the next sound (adjust as needed)
-                                audio_placeholder.empty()  # Clear the audio placeholder after playing the sound
+                                time.sleep(5)  # Wait for the sound to finish (adjust this duration as necessary)
                             else:
                                 st.error(f"Error: Sound file for '{detection}' not found.")
                         else:
@@ -173,7 +170,6 @@ with detect:
 
 with model_info:
     st.write("YOLOv5 model is used for traffic sign detection.")
-    
 # Footer Section
 footer = f"""
 <hr>
