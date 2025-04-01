@@ -164,7 +164,7 @@ with detect:
         st.image("assets/bg.jpg")
 
 with model_info:
-    st.write("ℹ️ This system uses YOLO for traffic sign detection and supports real-time fee")
+    st.write("ℹ️ This system uses YOLO for traffic sign detection and supports real-time detection.")
 
 # Footer Section
 footer = f"""
