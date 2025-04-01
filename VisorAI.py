@@ -69,19 +69,6 @@ SOUND_FILES = {
     "Stop": "assets/stop.mp3",
 }
 
-# ------------------- SESSION STATE INITIALIZATION -------------------
-# Ensure that 'last_detected_classes' exists in session state before accessing it
-if "last_detected_classes" not in st.session_state:
-    st.session_state.last_detected_classes = set()
-
-# ------------------- SOUND MAPPING -------------------
-SOUND_FILES = {
-    "Child-Pedestrian Crossing": "assets/child_pedestrian_crossing.mp3",
-    "Give Way": "assets/give_way.mp3",
-    "Speed Limit": "assets/speed_limit.mp3",
-    "Stop": "assets/stop.mp3",
-}
-
 # ------------------- AUDIO PLAYBACK USING BASE64 -------------------
 def autoplay_audio(file_path: str):
     """Plays the sound automatically using base64-encoded audio."""
@@ -162,12 +149,14 @@ with detect:
                 
                 # Trigger the sound feedback after the image has been displayed
                 if new_detections:
+                    # Play sounds sequentially
                     for detection in new_detections:
                         audio_file = SOUND_FILES.get(detection)
                         
                         if audio_file:
                             if os.path.exists(audio_file):  # Ensure the file exists
                                 autoplay_audio(audio_file)  # Play the sound automatically using base64 encoding
+                                time.sleep(5)  # Wait for 5 seconds before playing the next sound (adjust time as needed)
                             else:
                                 st.error(f"Error: Sound file for '{detection}' not found.")
                         else:
@@ -180,7 +169,7 @@ with detect:
         st.image("assets/bg.jpg")
 
 with model_info:
-    st.write("YOLOv5 model is used for traffic sign detection.") 
+    st.write("YOLOv5 model is used for traffic sign detection.")
     
 # Footer Section
 footer = f"""
