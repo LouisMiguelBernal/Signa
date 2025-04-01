@@ -57,7 +57,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ------------------- SESSION STATE INITIALIZATION -------------------
-# Initialize session state for "last_detected_classes" if not already initialized
+# Ensure that 'last_detected_classes' exists in session state before accessing it
 if "last_detected_classes" not in st.session_state:
     st.session_state.last_detected_classes = set()
 
@@ -72,15 +72,18 @@ SOUND_FILES = {
 # ------------------- AUDIO PLAYBACK USING BASE64 -------------------
 def autoplay_audio(file_path: str):
     """Plays the sound automatically using base64-encoded audio."""
-    with open(file_path, "rb") as f:
-        data = f.read()
-        b64 = base64.b64encode(data).decode()
-        md = f"""
-            <audio controls autoplay="true">
-            <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
-            </audio>
-            """
-        st.markdown(md, unsafe_allow_html=True)
+    try:
+        with open(file_path, "rb") as f:
+            data = f.read()
+            b64 = base64.b64encode(data).decode()
+            md = f"""
+                <audio controls autoplay="true">
+                <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+                </audio>
+                """
+            st.markdown(md, unsafe_allow_html=True)
+    except Exception as e:
+        st.error(f"Error playing sound: {str(e)}")
 
 # ------------------- LOAD YOLO MODEL -------------------
 @st.cache_resource
@@ -148,8 +151,15 @@ with detect:
                 if new_detections:
                     for detection in new_detections:
                         audio_file = SOUND_FILES.get(detection)
-                        if audio_file and os.path.exists(audio_file):
-                            autoplay_audio(audio_file)  # Play the sound automatically using base64 encoding
+                        
+                        if audio_file:
+                            if os.path.exists(audio_file):  # Ensure the file exists
+                                autoplay_audio(audio_file)  # Play the sound automatically using base64 encoding
+                            else:
+                                st.error(f"Error: Sound file for '{detection}' not found.")
+                        else:
+                            st.error(f"No sound mapped for '{detection}'.")
+
     else:
         # Reset session state when file is removed
         st.session_state.processed_image = None  # Reset detected image when file is removed
