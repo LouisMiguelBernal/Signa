@@ -123,7 +123,7 @@ def play_sound(class_names):
         audio_file = SOUND_FILES.get(class_name)
         if audio_file and os.path.exists(audio_file):
             audio_files.append(audio_file)
-    
+
     # Play sound files automatically
     for audio_file in audio_files:
         with open(audio_file, "rb") as f:
@@ -147,16 +147,15 @@ with detect:
         with col1:
             st.image(image, caption="Uploaded Image", use_container_width=True)
 
-            if st.button("Detect Traffic Signs"):
-                # Process image and detect traffic signs
-                detected_img, new_detections = process_image(image)
-                
-                with col2:
-                    st.image(cv2.cvtColor(np.array(detected_img, dtype=np.uint8), cv2.COLOR_BGR2RGB), caption="Detected Image", use_container_width=True)
-                
-                # Trigger the sound feedback immediately after processing the image
-                if new_detections:
-                    play_sound(new_detections)  # This should trigger the sound automatically
+            # Process image and detect traffic signs
+            detected_img, new_detections = process_image(image)
+            
+            with col2:
+                st.image(cv2.cvtColor(np.array(detected_img, dtype=np.uint8), cv2.COLOR_BGR2RGB), caption="Detected Image", use_container_width=True)
+            
+            # Trigger the sound feedback immediately after processing the image
+            if new_detections:
+                play_sound(new_detections)  # This should trigger the sound automatically
 
     else:
         st.session_state.processed_image = None  # Reset detected image when file is removed
@@ -164,8 +163,8 @@ with detect:
         st.image("assets/bg.jpg")
 
 with model_info:
-    st.write("ℹ️ This system uses YOLO for traffic sign detection and supports real-time")
-
+    st.write("ℹ️ This system uses YOLO for traffic sign detection and supports real-time detecti")
+    
 # Footer Section
 footer = f"""
 <hr>
