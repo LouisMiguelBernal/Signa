@@ -57,9 +57,11 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ------------------- SESSION STATE INITIALIZATION -------------------
-# Ensure that 'last_detected_classes' exists in session state before accessing it
 if "last_detected_classes" not in st.session_state:
     st.session_state.last_detected_classes = set()
+
+if "audio_queue" not in st.session_state:
+    st.session_state.audio_queue = []
 
 # ------------------- SOUND MAPPING -------------------
 SOUND_FILES = {
@@ -84,6 +86,15 @@ def autoplay_audio(file_path: str):
             st.markdown(md, unsafe_allow_html=True)
     except Exception as e:
         st.error(f"Error playing sound: {str(e)}")
+
+# ------------------- AUDIO QUEUE HANDLER -------------------
+def play_audio_queue():
+    """Plays audio in sequence from the queue."""
+    while st.session_state.audio_queue:
+        audio_file = st.session_state.audio_queue.pop(0)
+        autoplay_audio(audio_file)
+        # Wait for audio to finish before continuing to the next one
+        time.sleep(5)  # Adjust the sleep time to match the length of your longest audio clip
 
 # ------------------- LOAD YOLO MODEL -------------------
 @st.cache_resource
@@ -147,18 +158,21 @@ with detect:
                 # Display the detected image next to the uploaded image
                 col2.image(cv2.cvtColor(np.array(detected_img, dtype=np.uint8), cv2.COLOR_BGR2RGB), caption="Detected Image", use_container_width=True)
                 
-                # Trigger the sound feedback after the image has been displayed
+                # Add new detections to the audio queue
                 if new_detections:
                     for detection in new_detections:
                         audio_file = SOUND_FILES.get(detection)
                         
                         if audio_file:
                             if os.path.exists(audio_file):  # Ensure the file exists
-                                autoplay_audio(audio_file)  # Play the sound automatically using base64 encoding
+                                st.session_state.audio_queue.append(audio_file)  # Add to queue
                             else:
                                 st.error(f"Error: Sound file for '{detection}' not found.")
                         else:
                             st.error(f"No sound mapped for '{detection}'.")
+
+                    # Start playing the audio queue in a separate thread to avoid blocking the UI
+                    threading.Thread(target=play_audio_queue, daemon=True).start()
 
     else:
         # Reset session state when file is removed
