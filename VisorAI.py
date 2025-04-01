@@ -6,6 +6,7 @@ import numpy as np
 import cv2
 from ultralytics import YOLO
 import warnings
+import base64
 
 # Suppress warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
