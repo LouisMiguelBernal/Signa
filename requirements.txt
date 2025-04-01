@@ -4,4 +4,3 @@ Pillow
 ultralytics
 pygame
 numpy
-base64
