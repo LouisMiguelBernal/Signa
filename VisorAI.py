@@ -60,47 +60,45 @@ st.markdown("""
 # Ensure that 'last_detected_classes' exists in session state before accessing it
 if "last_detected_classes" not in st.session_state:
     st.session_state.last_detected_classes = set()
-    
-# ------------------- AUDIO PLAYBACK USING SEQUENTIAL JAVASCRIPT -------------------
-def autoplay_audio_sequential(file_paths: list):
-    """Plays the sounds sequentially using JavaScript."""
+
+# ------------------- SOUND MAPPING -------------------
+SOUND_FILES = {
+    "Child-Pedestrian Crossing": "assets/child_pedestrian_crossing.mp3",
+    "Give Way": "assets/give_way.mp3",
+    "Speed Limit": "assets/speed_limit.mp3",
+    "Stop": "assets/stop.mp3",
+}
+
+# ------------------- AUDIO PLAYBACK USING BASE64 -------------------
+def autoplay_audio(file_path: str):
+    """Plays the sound automatically using base64-encoded audio."""
     try:
-        # Generate HTML with JavaScript to play sounds one by one
-        audio_elements = ""
-        for file_path in file_paths:
-            with open(file_path, "rb") as f:
-                data = f.read()
-                b64 = base64.b64encode(data).decode()
-                audio_elements += f"""
-                <audio id="audio_{file_path}" src="data:audio/mp3;base64,{b64}" type="audio/mp3"></audio>
+        with open(file_path, "rb") as f:
+            data = f.read()
+            b64 = base64.b64encode(data).decode()
+            md = f"""
+                <audio controls autoplay="true">
+                <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+                </audio>
                 """
-        
-        # JavaScript to autoplay the sounds sequentially
-        js_script = f"""
-        <script>
-        let audioFiles = [{', '.join([f'"audio_{file_path}"' for file_path in file_paths])}];
-        let currentIndex = 0;
-        
-        function playNextAudio() {{
-            let currentAudio = document.getElementById(audioFiles[currentIndex]);
-            currentAudio.play();
-            currentAudio.onended = function() {{
-                currentIndex++;
-                if (currentIndex < audioFiles.length) {{
-                    playNextAudio();
-                }}
-            }};
-        }}
-        
-        playNextAudio();
-        </script>
-        """
-        
-        # Display the audio elements and JavaScript code
-        st.markdown(audio_elements + js_script, unsafe_allow_html=True)
-        
+            st.markdown(md, unsafe_allow_html=True)
     except Exception as e:
         st.error(f"Error playing sound: {str(e)}")
+
+# ------------------- LOAD YOLO MODEL -------------------
+@st.cache_resource
+def load_model():
+    """Load the YOLOv5 model."""
+    model_path = "assets/visor.pt"
+    if not os.path.exists(model_path):
+        st.error(f"❌ Model file not found: {model_path}")
+        return None
+    print("✅ YOLO Model Loaded")
+    return YOLO(model_path)
+
+model = load_model()
+if model is None:
+    st.stop()
 
 # ------------------- IMAGE PROCESSING -------------------
 def process_image(image):
@@ -151,22 +149,16 @@ with detect:
                 
                 # Trigger the sound feedback after the image has been displayed
                 if new_detections:
-                    # Collect sound files for the detected signs
-                    sound_files_to_play = []
                     for detection in new_detections:
                         audio_file = SOUND_FILES.get(detection)
                         
                         if audio_file:
                             if os.path.exists(audio_file):  # Ensure the file exists
-                                sound_files_to_play.append(audio_file)  # Add to the queue
+                                autoplay_audio(audio_file)  # Play the sound automatically using base64 encoding
                             else:
                                 st.error(f"Error: Sound file for '{detection}' not found.")
                         else:
                             st.error(f"No sound mapped for '{detection}'.")
-
-                    # Play the sounds sequentially
-                    if sound_files_to_play:
-                        autoplay_audio_sequential(sound_files_to_play)
 
     else:
         # Reset session state when file is removed
@@ -175,7 +167,7 @@ with detect:
         st.image("assets/bg.jpg")
 
 with model_info:
-    st.write("YOLOv5 model is used for traffic sign detection.")
+    st.write("YOLOv5 model is used for traffic sign detection.") 
     
 # Footer Section
 footer = f"""
