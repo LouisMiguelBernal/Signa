@@ -1,14 +1,11 @@
-import streamlit as st
-import tempfile
-import cv2
-import numpy as np
-from PIL import Image
-from ultralytics import YOLO
-import os
-import warnings
-import base64
 import time
-import threading
+import os
+import numpy as np
+import cv2
+import streamlit as st
+from PIL import Image
+from playsound import playsound  # Import playsound
+from ultralytics import YOLO
 
 # Suppress warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
