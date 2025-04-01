@@ -53,7 +53,7 @@ st.markdown("""
 # ------------------- SESSION STATE INITIALIZATION -------------------
 if "last_play_time" not in st.session_state:
     st.session_state.last_play_time = 0  # Prevents audio spam
-if "last_detected_classes" not in st.session_state:  
+if "last_detected_classes" not in st.session_state:
     st.session_state.last_detected_classes = set()  # Tracks detected classes
 if "processed_image" not in st.session_state:
     st.session_state.processed_image = None
@@ -105,19 +105,6 @@ def process_image(image):
 
     return detected_img, new_detections
 
-# ------------------- SOUND PLAYBACK FUNCTION -------------------
-def play_sound(class_names):
-    """Plays sound for detected traffic signs."""
-    current_time = time.time()
-    if current_time - st.session_state.last_play_time < 1.5:
-        return  # Prevent rapid sound spam
-
-    st.session_state.last_play_time = current_time
-    for class_name in class_names:
-        audio_file = SOUND_FILES.get(class_name)
-        if audio_file and os.path.exists(audio_file):
-            playsound(audio_file)  # Use playsound to play the sound
-
 # ------------------- STREAMLIT UI -------------------
 detect, model_info = st.tabs(["Detection", "Model Information"])
 
@@ -145,15 +132,21 @@ with detect:
                 
                 # Trigger the sound feedback after the image has been displayed
                 if new_detections:
-                    play_sound(new_detections)
+                    # Play sound using Streamlit's audio widget
+                    for class_name in new_detections:
+                        audio_file = SOUND_FILES.get(class_name)
+                        if audio_file and os.path.exists(audio_file):
+                            with open(audio_file, "rb") as f:
+                                audio_bytes = f.read()
+                            st.audio(audio_bytes, format="audio/mp3", start_time=0)
     else:
         st.session_state.processed_image = None  # Reset detected image when file is removed
         st.session_state.last_detected_classes.clear()  # Clear detected classes
         st.image("assets/bg.jpg")
 
 with model_info:
-    st.write("")
-
+    st.write("Model Information: This model detects traffic signs and plays corresponding sou")
+    
 # Footer Section
 footer = f"""
 <hr>
