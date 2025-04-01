@@ -57,12 +57,9 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ------------------- SESSION STATE INITIALIZATION -------------------
+# Ensure that 'last_detected_classes' exists in session state before accessing it
 if "last_detected_classes" not in st.session_state:
     st.session_state.last_detected_classes = set()
-if "audio_queue" not in st.session_state:
-    st.session_state.audio_queue = deque()  # Queue for audio playback
-if "is_playing" not in st.session_state:
-    st.session_state.is_playing = False  # Flag to check if audio is currently playing
 
 # ------------------- SOUND MAPPING -------------------
 SOUND_FILES = {
@@ -73,28 +70,20 @@ SOUND_FILES = {
 }
 
 # ------------------- AUDIO PLAYBACK USING BASE64 -------------------
-def autoplay_audio():
+def autoplay_audio(file_path: str):
     """Plays the sound automatically using base64-encoded audio."""
-    if st.session_state.audio_queue:
-        file_path = st.session_state.audio_queue.popleft()  # Get the next audio file
-        try:
-            with open(file_path, "rb") as f:
-                data = f.read()
-                b64 = base64.b64encode(data).decode()
-                md = f"""
-                    <audio id="audio-player" controls autoplay="true" onended="playNext()">
-                    <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
-                    </audio>
-                    <script>
-                    function playNext() {{
-                        const streamlitEvent = new Event('audioFinished');
-                        window.dispatchEvent(streamlitEvent);
-                    }}
-                    </script>
-                    """
-                st.markdown(md, unsafe_allow_html=True)
-        except Exception as e:
-            st.error(f"Error playing sound: {str(e)}")
+    try:
+        with open(file_path, "rb") as f:
+            data = f.read()
+            b64 = base64.b64encode(data).decode()
+            md = f"""
+                <audio controls autoplay="true">
+                <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+                </audio>
+                """
+            st.markdown(md, unsafe_allow_html=True)
+    except Exception as e:
+        st.error(f"Error playing sound: {str(e)}")
 
 # ------------------- LOAD YOLO MODEL -------------------
 @st.cache_resource
@@ -160,47 +149,27 @@ with detect:
                 
                 # Trigger the sound feedback after the image has been displayed
                 if new_detections:
+                    # Play sounds sequentially by waiting for one to finish before playing the next
                     for detection in new_detections:
                         audio_file = SOUND_FILES.get(detection)
                         
                         if audio_file:
                             if os.path.exists(audio_file):  # Ensure the file exists
-                                st.session_state.audio_queue.append(audio_file)  # Add to queue
+                                # Use st.empty() to manage audio playback sequentially
+                                audio_placeholder = st.empty()
+                                autoplay_audio(audio_file)  # Play the sound automatically using base64 encoding
+                                time.sleep(5)  # Wait for 5 seconds before playing the next sound (adjust as needed)
+                                audio_placeholder.empty()  # Clear the audio placeholder after playing the sound
                             else:
                                 st.error(f"Error: Sound file for '{detection}' not found.")
                         else:
                             st.error(f"No sound mapped for '{detection}'.")
 
-                    # Play the first audio in the queue if not already playing
-                    if not st.session_state.is_playing and st.session_state.audio_queue:
-                        st.session_state.is_playing = True
-                        autoplay_audio()  # Play the first audio
-
     else:
         # Reset session state when file is removed
         st.session_state.processed_image = None  # Reset detected image when file is removed
         st.session_state.last_detected_classes.clear()  # Clear detected classes
-        st.session_state.audio_queue.clear()  # Clear audio queue
-        st.session_state.is_playing = False  # Reset playing flag
         st.image("assets/bg.jpg")
-
-# Listen for the audio finished event to play the next audio
-if st.session_state.is_playing:
-    st.markdown("""
-        <script>
-        window.addEventListener('audioFinished', function() {
-            if (window.streamlitAudioQueue.length > 0) {
-                streamlitAudioQueue.shift();  // Remove the finished audio
-                streamlitAudioQueue.playNext();  // Play the next audio
-            } else {
-                // Reset the playing flag when done
-                window.streamlitAudioQueue = [];
-                const streamlitEvent = new Event('audioDone');
-                window.dispatchEvent(streamlitEvent);
-            }
-        });
-        </script>
-    """, unsafe_allow_html=True)
 
 with model_info:
     st.write("YOLOv5 model is used for traffic sign detection.")
