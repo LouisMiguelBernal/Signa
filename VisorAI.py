@@ -72,23 +72,6 @@ SOUND_FILES = {
     "Stop": "assets/stop.mp3",
 }
 
-# Initialize pygame mixer for audio playback
-pygame.mixer.init()
-
-def play_sound(class_names):
-    """Plays sound for detected traffic signs."""
-    current_time = time.time()
-    if current_time - st.session_state.last_play_time < 1.5:
-        return  # Prevent rapid sound spam
-
-    st.session_state.last_play_time = current_time
-    for class_name in class_names:
-        audio_file = SOUND_FILES.get(class_name)
-        if audio_file and os.path.exists(audio_file):
-            pygame.mixer.music.load(audio_file)
-            pygame.mixer.music.play()
-            time.sleep(2)  # Delay to avoid overlap
-
 # ------------------- LOAD YOLO MODEL -------------------
 @st.cache_resource
 def load_model():
@@ -126,7 +109,28 @@ def process_image(image):
 
     return detected_img, new_detections
 
+# ------------------- PLAY SOUND USING STREAMLIT -------------------
+def play_sound(class_names):
+    """Plays sound for detected traffic signs using Streamlit's audio functionality."""
+    current_time = time.time()
+    if current_time - st.session_state.last_play_time < 1.5:
+        return  # Prevent rapid sound spam
+
+    st.session_state.last_play_time = current_time
+    audio_files = []
+    for class_name in class_names:
+        audio_file = SOUND_FILES.get(class_name)
+        if audio_file and os.path.exists(audio_file):
+            audio_files.append(audio_file)
+    
+    # Play sound files automatically using Streamlit's audio functionality
+    for audio_file in audio_files:
+        with open(audio_file, "rb") as f:
+            st.audio(f.read(), format="audio/mp3")
+
 # ------------------- STREAMLIT UI -------------------
+st.title("🚦 Traffic Sign Detection System")
+
 detect, model_info = st.tabs(["Detection", "Model Information"])
 
 with detect:
@@ -148,10 +152,7 @@ with detect:
                 # Display the detected image next to the uploaded image
                 col2.image(cv2.cvtColor(np.array(detected_img, dtype=np.uint8), cv2.COLOR_BGR2RGB), caption="Detected Image", use_container_width=True)
                 
-                # Wait for the detected image to render before playing sound
-                time.sleep(1.5)  # Allow time for Streamlit to render the image
-                
-                # Trigger the sound feedback after the image has been displayed
+                # Trigger the sound feedback immediately after processing the image
                 if new_detections:
                     play_sound(new_detections)
     else:
@@ -160,7 +161,7 @@ with detect:
         st.image("assets/bg.jpg")
 
 with model_info:
-    st.write("")
+    st.write("ℹ️ This system uses YOLO for traffic sign detection and supports real-time detection with audio feedback.")
 
 
 # Footer Section
