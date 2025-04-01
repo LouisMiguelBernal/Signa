@@ -1,7 +1,8 @@
 streamlit
-opencv-python-headless
-numpy
-Pillow
 ultralytics
+opencv-python-headless
+pillow
+numpy
 pygame
-asyncio
+pydub
+simpleaudio
