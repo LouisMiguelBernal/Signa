@@ -5,6 +5,7 @@ import numpy as np
 from PIL import Image
 from ultralytics import YOLO
 import os
+os.environ["SDL_VIDEODRIVER"] = "dummy
 import warnings
 import base64
 import time
@@ -127,8 +128,6 @@ def process_image(image):
     return detected_img, new_detections
 
 # ------------------- STREAMLIT UI -------------------
-st.title("🚦 Traffic Sign Detection System")
-
 detect, model_info = st.tabs(["Detection", "Model Information"])
 
 with detect:
@@ -150,16 +149,19 @@ with detect:
                 # Display the detected image next to the uploaded image
                 col2.image(cv2.cvtColor(np.array(detected_img, dtype=np.uint8), cv2.COLOR_BGR2RGB), caption="Detected Image", use_container_width=True)
                 
-                # Trigger the sound feedback immediately after processing the image
+                # Wait for the detected image to render before playing sound
+                time.sleep(1.5)  # Allow time for Streamlit to render the image
+                
+                # Trigger the sound feedback after the image has been displayed
                 if new_detections:
-                    play_sound(new_detections)  # Play sound immediately after detections
+                    play_sound(new_detections)
     else:
         st.session_state.processed_image = None  # Reset detected image when file is removed
         st.session_state.last_detected_classes.clear()  # Clear detected classes
         st.image("assets/bg.jpg")
 
 with model_info:
-    st.write("ℹ️ This system uses YOLO for traffic sign detection and supports real-time detection with audio feedback.")
+    st.write("")
 
 
 # Footer Section
