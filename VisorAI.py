@@ -11,6 +11,8 @@ import base64
 import time
 import threading
 import pygame
+from pydub import AudioSegment
+import simpleaudio as sa
 
 # Suppress warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -73,9 +75,7 @@ SOUND_FILES = {
     "Stop": "assets/stop.mp3",
 }
 
-# Initialize pygame mixer for audio playback
-pygame.mixer.init()
-
+# ------------------- FUNCTION FOR PLAYING SOUND -------------------
 def play_sound(class_names):
     """Plays sound for detected traffic signs."""
     current_time = time.time()
@@ -86,9 +86,11 @@ def play_sound(class_names):
     for class_name in class_names:
         audio_file = SOUND_FILES.get(class_name)
         if audio_file and os.path.exists(audio_file):
-            pygame.mixer.music.load(audio_file)
-            pygame.mixer.music.play()
-            time.sleep(2)  # Delay to avoid overlap
+            # Load the audio file
+            sound = AudioSegment.from_mp3(audio_file)
+            # Play the sound using simpleaudio
+            play_obj = sa.play_buffer(sound.raw_data, num_channels=1, bytes_per_sample=2, sample_rate=44100)
+            play_obj.wait_done()  # Wait until the sound finishes before continuing
 
 # ------------------- LOAD YOLO MODEL -------------------
 @st.cache_resource
@@ -161,7 +163,7 @@ with detect:
         st.image("assets/bg.jpg")
 
 with model_info:
-    st.write("")
+    st.write("Model Info Placeholder: Add more details about the YOLO model or other info.")
 
 
 # Footer Section
