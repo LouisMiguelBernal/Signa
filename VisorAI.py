@@ -1,12 +1,15 @@
 import streamlit as st
-import os
-import time
-from PIL import Image
-import numpy as np
+import tempfile
 import cv2
+import numpy as np
+from PIL import Image
 from ultralytics import YOLO
+import os
 import warnings
 import base64
+import time
+import threading
+import pygame
 
 # Suppress warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -68,6 +71,23 @@ SOUND_FILES = {
     "Speed Limit": "assets/speed_limit.mp3",
     "Stop": "assets/stop.mp3",
 }
+
+# Initialize pygame mixer for audio playback
+pygame.mixer.init()
+
+def play_sound(class_names):
+    """Plays sound for detected traffic signs."""
+    current_time = time.time()
+    if current_time - st.session_state.last_play_time < 1.5:
+        return  # Prevent rapid sound spam
+
+    st.session_state.last_play_time = current_time
+    for class_name in class_names:
+        audio_file = SOUND_FILES.get(class_name)
+        if audio_file and os.path.exists(audio_file):
+            pygame.mixer.music.load(audio_file)
+            pygame.mixer.music.play()
+            time.sleep(2)  # Delay to avoid overlap
 
 # ------------------- LOAD YOLO MODEL -------------------
 @st.cache_resource
@@ -133,21 +153,16 @@ with detect:
                 
                 # Trigger the sound feedback after the image has been displayed
                 if new_detections:
-                    # Play sound using Streamlit's audio widget
-                    for class_name in new_detections:
-                        audio_file = SOUND_FILES.get(class_name)
-                        if audio_file and os.path.exists(audio_file):
-                            with open(audio_file, "rb") as f:
-                                audio_bytes = f.read()
-                            st.audio(audio_bytes, format="audio/mp3", start_time=0)
+                    play_sound(new_detections)
     else:
         st.session_state.processed_image = None  # Reset detected image when file is removed
         st.session_state.last_detected_classes.clear()  # Clear detected classes
         st.image("assets/bg.jpg")
 
 with model_info:
-    st.write("Model Information: This model detects traffic signs and plays corresponding sou")
-    
+    st.write("")
+
+
 # Footer Section
 footer = f"""
 <hr>
