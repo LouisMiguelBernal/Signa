@@ -127,6 +127,17 @@ def process_image(image):
 # ------------------- STREAMLIT UI -------------------
 detect, model_info = st.tabs(["Detection", "Model Information"])
 
+# Function to manage sequential audio playback
+def play_sounds_sequentially(sounds):
+    """Plays multiple sounds one after another."""
+    for sound in sounds:
+        audio_file = SOUND_FILES.get(sound)
+        if audio_file and os.path.exists(audio_file):  # Ensure the file exists
+            autoplay_audio(audio_file)
+            time.sleep(5)  # Wait for the sound to finish (adjust this duration as necessary)
+        else:
+            st.error(f"Error: Sound file for '{sound}' not found.")
+
 with detect:
     with st.sidebar:
         uploaded_file = st.file_uploader("Upload Image", type=["jpg", "jpeg", "png"])
@@ -149,18 +160,8 @@ with detect:
                 
                 # Trigger the sound feedback after the image has been displayed
                 if new_detections:
-                    # Create a queue to play sounds one after another
-                    for detection in new_detections:
-                        audio_file = SOUND_FILES.get(detection)
-                        
-                        if audio_file:
-                            if os.path.exists(audio_file):  # Ensure the file exists
-                                autoplay_audio(audio_file)  # Play the sound automatically using base64 encoding
-                                time.sleep(5)  # Wait for the sound to finish (adjust this duration as necessary)
-                            else:
-                                st.error(f"Error: Sound file for '{detection}' not found.")
-                        else:
-                            st.error(f"No sound mapped for '{detection}'.")
+                    # Play the sounds sequentially
+                    play_sounds_sequentially(new_detections)
 
     else:
         # Reset session state when file is removed
@@ -170,6 +171,7 @@ with detect:
 
 with model_info:
     st.write("YOLOv5 model is used for traffic sign detection.")
+    
 # Footer Section
 footer = f"""
 <hr>
