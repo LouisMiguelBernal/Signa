@@ -5,6 +5,7 @@ from PIL import Image
 import numpy as np
 import cv2
 from ultralytics import YOLO
+import warnings
 
 # Suppress warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
