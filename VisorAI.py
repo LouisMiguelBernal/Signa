@@ -72,6 +72,23 @@ SOUND_FILES = {
     "Stop": "assets/stop.mp3",
 }
 
+# Initialize pygame mixer for audio playback
+pygame.mixer.init()
+
+def play_sound(class_names):
+    """Plays sound for detected traffic signs."""
+    current_time = time.time()
+    if current_time - st.session_state.last_play_time < 1.5:
+        return  # Prevent rapid sound spam
+
+    st.session_state.last_play_time = current_time
+    for class_name in class_names:
+        audio_file = SOUND_FILES.get(class_name)
+        if audio_file and os.path.exists(audio_file):
+            pygame.mixer.music.load(audio_file)
+            pygame.mixer.music.play()
+            time.sleep(2)  # Delay to avoid overlap
+
 # ------------------- LOAD YOLO MODEL -------------------
 @st.cache_resource
 def load_model():
@@ -109,25 +126,6 @@ def process_image(image):
 
     return detected_img, new_detections
 
-# ------------------- PLAY SOUND USING STREAMLIT -------------------
-def play_sound(class_names):
-    """Plays sound for detected traffic signs using Streamlit's audio functionality."""
-    current_time = time.time()
-    if current_time - st.session_state.last_play_time < 1.5:
-        return  # Prevent rapid sound spam
-
-    st.session_state.last_play_time = current_time
-    audio_files = []
-    for class_name in class_names:
-        audio_file = SOUND_FILES.get(class_name)
-        if audio_file and os.path.exists(audio_file):
-            audio_files.append(audio_file)
-    
-    # Play sound files automatically using Streamlit's audio functionality
-    for audio_file in audio_files:
-        with open(audio_file, "rb") as f:
-            st.audio(f.read(), format="audio/mp3")
-
 # ------------------- STREAMLIT UI -------------------
 st.title("🚦 Traffic Sign Detection System")
 
@@ -154,7 +152,7 @@ with detect:
                 
                 # Trigger the sound feedback immediately after processing the image
                 if new_detections:
-                    play_sound(new_detections)
+                    play_sound(new_detections)  # Play sound immediately after detections
     else:
         st.session_state.processed_image = None  # Reset detected image when file is removed
         st.session_state.last_detected_classes.clear()  # Clear detected classes
