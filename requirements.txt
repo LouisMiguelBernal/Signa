@@ -1,7 +1,6 @@
 streamlit
-numpy
-opencv-python
 Pillow
-playsound==1.2.2
+opencv-python-headless
+numpy
 ultralytics
-base64
+pygame
