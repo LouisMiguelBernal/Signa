@@ -56,13 +56,6 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# ------------------- SESSION STATE INITIALIZATION -------------------
-if "last_detected_classes" not in st.session_state:
-    st.session_state.last_detected_classes = set()
-
-if "audio_queue" not in st.session_state:
-    st.session_state.audio_queue = []
-
 # ------------------- AUDIO PLAYBACK USING SEQUENTIAL JAVASCRIPT -------------------
 def autoplay_audio_sequential(file_paths: list):
     """Plays the sounds sequentially using JavaScript."""
