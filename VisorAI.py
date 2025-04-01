@@ -63,53 +63,46 @@ if "last_detected_classes" not in st.session_state:
 if "audio_queue" not in st.session_state:
     st.session_state.audio_queue = []
 
-# ------------------- SOUND MAPPING -------------------
-SOUND_FILES = {
-    "Child-Pedestrian Crossing": "assets/child_pedestrian_crossing.mp3",
-    "Give Way": "assets/give_way.mp3",
-    "Speed Limit": "assets/speed_limit.mp3",
-    "Stop": "assets/stop.mp3",
-}
-
-# ------------------- AUDIO PLAYBACK USING BASE64 -------------------
-def autoplay_audio(file_path: str):
-    """Plays the sound automatically using base64-encoded audio."""
+# ------------------- AUDIO PLAYBACK USING SEQUENTIAL JAVASCRIPT -------------------
+def autoplay_audio_sequential(file_paths: list):
+    """Plays the sounds sequentially using JavaScript."""
     try:
-        with open(file_path, "rb") as f:
-            data = f.read()
-            b64 = base64.b64encode(data).decode()
-            md = f"""
-                <audio controls autoplay="true">
-                <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
-                </audio>
+        # Generate HTML with JavaScript to play sounds one by one
+        audio_elements = ""
+        for file_path in file_paths:
+            with open(file_path, "rb") as f:
+                data = f.read()
+                b64 = base64.b64encode(data).decode()
+                audio_elements += f"""
+                <audio id="audio_{file_path}" src="data:audio/mp3;base64,{b64}" type="audio/mp3"></audio>
                 """
-            st.markdown(md, unsafe_allow_html=True)
+        
+        # JavaScript to autoplay the sounds sequentially
+        js_script = f"""
+        <script>
+        let audioFiles = [{', '.join([f'"audio_{file_path}"' for file_path in file_paths])}];
+        let currentIndex = 0;
+        
+        function playNextAudio() {{
+            let currentAudio = document.getElementById(audioFiles[currentIndex]);
+            currentAudio.play();
+            currentAudio.onended = function() {{
+                currentIndex++;
+                if (currentIndex < audioFiles.length) {{
+                    playNextAudio();
+                }}
+            }};
+        }}
+        
+        playNextAudio();
+        </script>
+        """
+        
+        # Display the audio elements and JavaScript code
+        st.markdown(audio_elements + js_script, unsafe_allow_html=True)
+        
     except Exception as e:
         st.error(f"Error playing sound: {str(e)}")
-
-# ------------------- AUDIO QUEUE HANDLER -------------------
-def play_audio_queue():
-    """Plays audio in sequence from the queue."""
-    while st.session_state.audio_queue:
-        audio_file = st.session_state.audio_queue.pop(0)
-        autoplay_audio(audio_file)
-        # Wait for audio to finish before continuing to the next one
-        time.sleep(5)  # Adjust the sleep time to match the length of your longest audio clip
-
-# ------------------- LOAD YOLO MODEL -------------------
-@st.cache_resource
-def load_model():
-    """Load the YOLOv5 model."""
-    model_path = "assets/visor.pt"
-    if not os.path.exists(model_path):
-        st.error(f"❌ Model file not found: {model_path}")
-        return None
-    print("✅ YOLO Model Loaded")
-    return YOLO(model_path)
-
-model = load_model()
-if model is None:
-    st.stop()
 
 # ------------------- IMAGE PROCESSING -------------------
 def process_image(image):
@@ -158,21 +151,24 @@ with detect:
                 # Display the detected image next to the uploaded image
                 col2.image(cv2.cvtColor(np.array(detected_img, dtype=np.uint8), cv2.COLOR_BGR2RGB), caption="Detected Image", use_container_width=True)
                 
-                # Add new detections to the audio queue
+                # Trigger the sound feedback after the image has been displayed
                 if new_detections:
+                    # Collect sound files for the detected signs
+                    sound_files_to_play = []
                     for detection in new_detections:
                         audio_file = SOUND_FILES.get(detection)
                         
                         if audio_file:
                             if os.path.exists(audio_file):  # Ensure the file exists
-                                st.session_state.audio_queue.append(audio_file)  # Add to queue
+                                sound_files_to_play.append(audio_file)  # Add to the queue
                             else:
                                 st.error(f"Error: Sound file for '{detection}' not found.")
                         else:
                             st.error(f"No sound mapped for '{detection}'.")
 
-                    # Start playing the audio queue in a separate thread to avoid blocking the UI
-                    threading.Thread(target=play_audio_queue, daemon=True).start()
+                    # Play the sounds sequentially
+                    if sound_files_to_play:
+                        autoplay_audio_sequential(sound_files_to_play)
 
     else:
         # Reset session state when file is removed
