@@ -134,7 +134,7 @@ def play_sounds_sequentially(sounds):
         audio_file = SOUND_FILES.get(sound)
         if audio_file and os.path.exists(audio_file):  # Ensure the file exists
             autoplay_audio(audio_file)
-            time.sleep(5)  # Wait for the sound to finish (adjust this duration as necessary)
+            time.sleep(2)  # Wait for the sound to finish (adjust this duration as necessary)
         else:
             st.error(f"Error: Sound file for '{sound}' not found.")
 
