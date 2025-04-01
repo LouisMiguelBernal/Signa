@@ -1,8 +1,9 @@
 streamlit
-ultralytics
-opencv-python-headless
-pillow
+opencv-python
 numpy
-pygame
-pydub
-simpleaudio
+Pillow
+ultralytics
+base64
+warnings
+time
+threading
