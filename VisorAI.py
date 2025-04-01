@@ -10,7 +10,6 @@ import base64
 import time
 import threading
 import pygame
-import asyncio
 
 # Suppress warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -73,6 +72,23 @@ SOUND_FILES = {
     "Stop": "assets/stop.mp3",
 }
 
+# Initialize pygame mixer for audio playback
+pygame.mixer.init()
+
+def play_sound(class_names):
+    """Plays sound for detected traffic signs."""
+    current_time = time.time()
+    if current_time - st.session_state.last_play_time < 1.5:
+        return  # Prevent rapid sound spam
+
+    st.session_state.last_play_time = current_time
+    for class_name in class_names:
+        audio_file = SOUND_FILES.get(class_name)
+        if audio_file and os.path.exists(audio_file):
+            pygame.mixer.music.load(audio_file)
+            pygame.mixer.music.play()
+            time.sleep(2)  # Delay to avoid overlap
+
 # ------------------- LOAD YOLO MODEL -------------------
 @st.cache_resource
 def load_model():
@@ -110,28 +126,7 @@ def process_image(image):
 
     return detected_img, new_detections
 
-# ------------------- PLAY SOUND USING STREAMLIT -------------------
-def play_sound(class_names):
-    """Plays sound for detected traffic signs using Streamlit's audio functionality."""
-    current_time = time.time()
-    if current_time - st.session_state.last_play_time < 1.5:
-        return  # Prevent rapid sound spam
-
-    st.session_state.last_play_time = current_time
-    audio_files = []
-    for class_name in class_names:
-        audio_file = SOUND_FILES.get(class_name)
-        if audio_file and os.path.exists(audio_file):
-            audio_files.append(audio_file)
-
-    # Play sound files automatically
-    for audio_file in audio_files:
-        with open(audio_file, "rb") as f:
-            st.audio(f.read(), format="audio/mp3")
-
 # ------------------- STREAMLIT UI -------------------
-st.title("🚦 Traffic Sign Detection System")
-
 detect, model_info = st.tabs(["Detection", "Model Information"])
 
 with detect:
@@ -141,30 +136,33 @@ with detect:
     if uploaded_file:
         image = Image.open(uploaded_file).convert("RGB")
         
-        # Create two columns for side-by-side images
-        col1, col2 = st.columns(2)
+        # Create two columns with equal width for the images
+        col1, col2 = st.columns([1, 1])
 
         with col1:
             st.image(image, caption="Uploaded Image", use_container_width=True)
-
-            # Process image and detect traffic signs
-            detected_img, new_detections = process_image(image)
-            
-            with col2:
-                st.image(cv2.cvtColor(np.array(detected_img, dtype=np.uint8), cv2.COLOR_BGR2RGB), caption="Detected Image", use_container_width=True)
-            
-            # Trigger the sound feedback immediately after processing the image
-            if new_detections:
-                play_sound(new_detections)  # This should trigger the sound automatically
-
+            if st.button("Detect Traffic Signs"):
+                # Process image and detect traffic signs
+                detected_img, new_detections = process_image(image)
+                
+                # Display the detected image next to the uploaded image
+                col2.image(cv2.cvtColor(np.array(detected_img, dtype=np.uint8), cv2.COLOR_BGR2RGB), caption="Detected Image", use_container_width=True)
+                
+                # Wait for the detected image to render before playing sound
+                time.sleep(1.5)  # Allow time for Streamlit to render the image
+                
+                # Trigger the sound feedback after the image has been displayed
+                if new_detections:
+                    play_sound(new_detections)
     else:
         st.session_state.processed_image = None  # Reset detected image when file is removed
         st.session_state.last_detected_classes.clear()  # Clear detected classes
         st.image("assets/bg.jpg")
 
 with model_info:
-    st.write("ℹ️ This system uses YOLO for traffic sign detection and supports real-time detecti")
-    
+    st.write("")
+
+
 # Footer Section
 footer = f"""
 <hr>
