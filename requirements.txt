@@ -2,6 +2,6 @@ streamlit
 numpy
 opencv-python
 Pillow
-playsound
+playsound==1.2.2
 ultralytics
 base64
