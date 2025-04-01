@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image
 from ultralytics import YOLO
 import os
-os.environ["SDL_VIDEODRIVER"] = "dummy
+os.environ["SDL_VIDEODRIVER"] = "dummy" 
 import warnings
 import base64
 import time
