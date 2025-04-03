@@ -17,7 +17,7 @@ from collections import deque
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 # Set Streamlit page config
-st.set_page_config(page_title="VisorAI", layout="wide", page_icon="assets/icon.png")
+st.set_page_config(page_title="Signa", layout="wide", page_icon="assets/icon.png")
 
 # Function to convert image to base64
 def get_base64_image(image_path):
