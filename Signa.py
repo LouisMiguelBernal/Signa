@@ -89,7 +89,7 @@ def autoplay_audio(file_path: str):
 @st.cache_resource
 def load_model():
     """Load the YOLOv5 model."""
-    model_path = "assets/visor.pt"
+    model_path = "assets/signa.pt"
     if not os.path.exists(model_path):
         st.error(f"❌ Model file not found: {model_path}")
         return None
