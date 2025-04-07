@@ -33,7 +33,7 @@ st.markdown(
     f"""
     <div style="display: flex; align-items: center; padding-top: 50px;">
         <img src="data:image/png;base64,{logo_base64}" style="width: 100px; height: auto; margin-right: 10px;">
-        <h1 style="margin: 0;">Visor<span style="color:#4CAF50;">AI</span></h1>
+        <h1 style="margin: 0;">Sig<span style="color:#4CAF50;">na</span></h1>
     </div>
     """,
     unsafe_allow_html=True
@@ -179,7 +179,7 @@ footer = f"""
   <div style="flex-grow: 1; text-align: left;">
     <div style="display: flex; align-items: center;">
         <img src="data:image/png;base64,{logo_base64}" style="width: 100px; margin-right: 10px;">
-        <h1 style="margin: 0;">Visor<span style="color:#4CAF50;">AI</span></h1>
+        <h1 style="margin: 0;">Sig<span style="color:#4CAF50;">na</span></h1>
     </div>
   </div>
   <!-- Copyright -->
