@@ -53,7 +53,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ------------------- STREAMLIT UI -------------------
-detect = st.tabs(["Detection"])
+detect_tab, = st.tabs(["Detection"])
 
 # ---------------- SESSION STATE INIT ----------------
 if "uploaded_images" not in st.session_state:
@@ -149,7 +149,7 @@ def resize_cv2_image(image_bgr, max_width=800, max_height=600):
         return cv2.resize(image_bgr, new_dim, interpolation=cv2.INTER_AREA)
     return image_bgr
 
-with detect:
+with detect_tab:
     # ---------------- SIDEBAR: UPLOAD IMAGES ----------------
     with st.sidebar:
         st.header("📤 Upload Images")
