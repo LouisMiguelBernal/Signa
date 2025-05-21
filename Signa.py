@@ -246,8 +246,6 @@ with detect:
         st.session_state.last_detected_classes.clear()  # Clear detected classes
         st.image("assets/bg.jpg")
         
-with model_info:
-    st.title('Model Benchmark')
 
 # ---------------- FOOTER ----------------
 footer = f"""
