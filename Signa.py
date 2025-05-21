@@ -167,7 +167,7 @@ with detect:
 
 
 with model_info:
-    st.write("YOLOv11model is used for traffic sign detection.")
+    st.write("YOLOv11 model is used for traffic sign detection.")
     
 # Footer Section
 footer = f"""
