@@ -28,7 +28,7 @@ st.markdown(
     f"""
     <div style="display: flex; align-items: center; padding-top: 50px;">
         <img src="data:image/png;base64,{logo_base64}" style="width: 100px; height: auto; margin-right: 10px;">
-        <h1 style="margin: 0;">Sig<span style="color:#4CAF50;">na</span></h1>
+        <h1 style="margin: 0;">Sig<span style="color:#D32F2F;">na</span></h1>
     </div>
     """,
     unsafe_allow_html=True
@@ -42,11 +42,11 @@ st.markdown("""
         padding: 12px 24px;
         margin-right: 10px;
         border-radius: 8px;
-        background-color: #4CAF50;
+        background-color: #D32F2F;
         color: white;
     }
     .stTabs [role="tablist"] button[aria-selected="true"] {
-        background-color: #4CAF50;
+        background-color: #D32F2F;
         color: white;
     }
     </style>
@@ -256,7 +256,7 @@ footer = f"""
   <div style="flex-grow: 1; text-align: left;">
     <div style="display: flex; align-items: center;">
         <img src="data:image/png;base64,{logo_base64}" style="width: 100px; margin-right: 10px;">
-        <h1 style="margin: 0;">Sig<span style="color:#4CAF50;">na</span></h1>
+        <h1 style="margin: 0;">Sig<span style="color:#D32F2F;">na</span></h1>
     </div>
   </div>
   <div style="flex-grow: 1; text-align: center;">
