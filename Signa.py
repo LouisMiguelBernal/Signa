@@ -53,7 +53,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ------------------- STREAMLIT UI -------------------
-detect, model_info = st.tabs(["Detection"])
+detect = st.tabs(["Detection"])
 
 # ---------------- SESSION STATE INIT ----------------
 if "uploaded_images" not in st.session_state:
