@@ -88,7 +88,7 @@ def autoplay_audio(file_path: str):
 # ------------------- LOAD YOLO MODEL -------------------
 @st.cache_resource
 def load_model():
-    """Load the YOLOv5 model."""
+    """Load the YOLOv11model."""
     model_path = "assets/signa.pt"
     if not os.path.exists(model_path):
         st.error(f"❌ Model file not found: {model_path}")
@@ -167,7 +167,7 @@ with detect:
 
 
 with model_info:
-    st.write("YOLOv5 model is used for traffic sign detection.")
+    st.write("YOLOv11model is used for traffic sign detection.")
     
 # Footer Section
 footer = f"""
